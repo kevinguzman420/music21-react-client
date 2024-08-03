@@ -5,9 +5,9 @@ import MidiPlayer from "midi-player-js";
 
 // import logo from "worshiplife-logo.png";
 
-const instance = axios.create({
-  baseURL: "http://localhost:5000/api",
-});
+// const instance = axios.create({
+//   baseURL: "http://localhost:5000/api",
+// });
 
 const MusicGenerator = () => {
   const [text, setText] = useState("");
@@ -43,8 +43,8 @@ const MusicGenerator = () => {
       return;
     }
     try {
-      const { data } = await instance.post(
-        "http://localhost:5000/api/generate_music",
+      const { data } = await axios.post(
+        `https://music21-python-server.onrender.com/api/generate_music`,
         {
           text,
           instrument,
@@ -92,7 +92,7 @@ const MusicGenerator = () => {
       >
         <figure className=" -ml-[25px] w-[400px] ">
           <img
-            src={"http://localhost:5173/worshiplife-logo.png"}
+            src={"https://worshiplife.netlify.app/worshiplife-logo.png"}
             alt="Worship Life - Logo"
             className=" w-full "
           />
