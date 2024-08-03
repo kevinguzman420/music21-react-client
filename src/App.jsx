@@ -1,13 +1,8 @@
 import axios from "axios";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { useState, useEffect } from "react";
 import Soundfont from "soundfont-player";
 import MidiPlayer from "midi-player-js";
-
-// import logo from "worshiplife-logo.png";
-
-// const instance = axios.create({
-//   baseURL: "http://localhost:5000/api",
-// });
 
 const MusicGenerator = () => {
   const [text, setText] = useState("");
@@ -16,6 +11,9 @@ const MusicGenerator = () => {
   const [error, setError] = useState(null);
   const [audioContext, setAudioContext] = useState(null);
   const [player, setPlayer] = useState(null);
+
+  const [midiPlayer, setMidiPlayer] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     // Inicializar AudioContext y Player
@@ -65,6 +63,14 @@ const MusicGenerator = () => {
           });
         }
       });
+
+      midiPlayer.on("endOfFile", () => {
+        setIsPlaying(false);
+      });
+
+      setMidiPlayer(midiPlayer);
+      setIsPlaying(true);
+
       midiPlayer.play();
     } catch (err) {
       setError("Error al generar o reproducir la música");
@@ -97,7 +103,7 @@ const MusicGenerator = () => {
             className=" w-full "
           />
         </figure>
-        <div className=" w-[calc(100%-500px)] h-full border ">
+        <div className=" w-[calc(100%-500px)] h-full ">
           <div className=" font-rock text-5xl ">
             <div className=" flex items-center justify-center w-[240px] h-[56px] text-2xl bg-black text-white rounded-tl-lg rounded-br-lg ">
               Conversor de
@@ -118,41 +124,120 @@ const MusicGenerator = () => {
                 maxLength={64}
               />
             </div>
-            <div className=" flex flex-col my-4 ">
-              <label className=" text-lg text-white " htmlFor="">
-                Selecciona un instrumento:
-              </label>
-              <select
-                value={instrument}
-                onChange={(e) => setInstrument(e.target.value)}
-                className=" w-[100px] h-[44px] bg-secondary rounded "
-              >
-                <option value="Piano">Piano</option>
-                <option value="Guitar">Guitarra</option>
-                <option value="Violin">Violín</option>
-                <option value="Flute">Flauta</option>
-                <option value="Trumpet">Trompeta</option>
-                <option value="Organ">Organo</option>
-              </select>
-            </div>
             <button
               onClick={generateMusic}
               disabled={isLoading || text.trim() === "" || !player}
-              className=" px-[15px] h-[58px] bg-bg rounded-lg text-white text-lg cursor-pointer "
+              className=" px-[15px] h-[58px] bg-bg rounded-lg text-white text-lg cursor-pointer mt-4 "
             >
               {isLoading ? (
                 "Generando..."
               ) : (
                 <span>
-                  Generar y Reproducir Música{" "}
+                  Generar Melodía{" "}
                   <i className=" text-xl ri-play-circle-fill"></i>
                 </span>
               )}
             </button>
           </div>
           {error && <p className="error">{error}</p>}
+
+          <MidiVisualizer midiPlayer={midiPlayer} isPlaying={isPlaying} />
         </div>
       </div>
+    </div>
+  );
+};
+
+// const MidiVisualizer = ({ midiPlayer, isPlaying }) => {
+//   const [data, setData] = useState([]);
+
+//   useEffect(() => {
+//     if (!midiPlayer) return;
+
+//     const handleMidiEvent = (event) => {
+//       if (event.name === "Note on" && event.velocity > 0) {
+//         const noteData = {
+//           name: event.noteName,
+//           velocity: event.velocity,
+//         };
+
+//         setData((prevData) => [...prevData, noteData].slice(-10)); // Keep the last 10 notes
+//       }
+//     };
+
+//     midiPlayer.on("midiEvent", handleMidiEvent);
+
+//     return () => {
+//       midiPlayer.off("midiEvent", handleMidiEvent);
+//     };
+//   }, [midiPlayer]);
+
+//   return (
+//     <BarChart
+//       width={600}
+//       height={300}
+//       data={data}
+//       margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+//     >
+//       <CartesianGrid strokeDasharray="3 3" />
+//       <XAxis dataKey="name" />
+//       <YAxis />
+//       <Tooltip />
+//       <Bar dataKey="velocity" fill="#8884d8" />
+//     </BarChart>
+//   );
+// };
+
+const MidiVisualizer = ({ midiPlayer, isPlaying }) => {
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    if (!midiPlayer) return;
+
+    const handleMidiEvent = (event) => {
+      if (event.name === "Note on" && event.velocity > 0) {
+        const noteData = {
+          name: event.noteName,
+          velocity: event.velocity,
+        };
+
+        setData((prevData) => [...prevData, noteData].slice(-10)); // Keep the last 10 notes
+      }
+    };
+
+    midiPlayer.on("midiEvent", handleMidiEvent);
+
+    // return () => {
+    //   midiPlayer.removeListener("midiEvent", handleMidiEvent);
+    // };
+  }, [midiPlayer]);
+
+  return (
+    <div className=" ">
+      <BarChart
+        width={600}
+        height={200}
+        data={data}
+        margin={{ top: 20, right: 0, left: 20, bottom: 5 }}
+        className=" flex justify-start "
+      >
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip />
+        <Bar dataKey="velocity" fill="#8884d8" />
+      </BarChart>
+
+      {data && (
+        <div>
+          <button
+            className=" px-[15px] text-white h-[40px] bg-bg rounded "
+            onClick={() => window.location.reload()}
+          >
+            Limpiar
+          </button>
+        </div>
+      )}
     </div>
   );
 };
